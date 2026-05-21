@@ -1,0 +1,66 @@
+name: Build family calendar
+
+on:
+  schedule:
+    # Every 2 hours, 15 min past the hour (avoids the on-the-hour rush
+    # that often gets delayed on GitHub's free tier).
+    - cron: '15 */2 * * *'
+  workflow_dispatch:        # adds a "Run workflow" button in the Actions tab
+  push:
+    branches: [main]
+    paths:
+      - 'config.yaml'
+      - 'filter_calendar.py'
+      - 'requirements.txt'
+      - '.github/workflows/build.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build filtered calendar
+        env:
+          FEED_WHOLE_SCHOOL:  ${{ secrets.FEED_WHOLE_SCHOOL }}
+          FEED_MIDDLE_SCHOOL: ${{ secrets.FEED_MIDDLE_SCHOOL }}
+          FEED_UPPER_SCHOOL:  ${{ secrets.FEED_UPPER_SCHOOL }}
+          FEED_MAIA_GAMES:    ${{ secrets.FEED_MAIA_GAMES }}
+          FEED_ZANDER_GAMES:  ${{ secrets.FEED_ZANDER_GAMES }}
+          OUTPUT_TOKEN:       ${{ secrets.OUTPUT_TOKEN }}
+        run: python filter_calendar.py
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: output
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
