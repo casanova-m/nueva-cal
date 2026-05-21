@@ -91,29 +91,36 @@ def matches_any(text: str, patterns) -> bool:
 
 # ---------- filter logic ----------
 
-
-
-
 def classify(event, feed_name: str, cfg: dict):
     """Return (included, reason).
 
     Order of precedence (highest to lowest):
-      1. Match in always_exclude_keywords -> exclude (highest priority,
-         use this when a broad include rule is causing a specific false
-         positive you want to remove).
-      2. Feeds in always_include_feeds -> include (no filtering at all).
-      3. Match in include_keywords -> include (this BEATS exclude_keywords).
-      4. Match in exclude_keywords -> exclude.
-      5. Match in feed_excludes[feed_name] -> exclude.
-      6. Fall back to feed_defaults[feed_name], default 'exclude'.
+      1. Match in always_exclude_keywords (full text) -> exclude.
+      2. Feeds in always_include_feeds -> include (no filtering).
+      3. Match in title_excludes (TITLE ONLY) -> exclude. This beats
+         include_keywords so that an event titled "8th Grade Trip" stays
+         out even if its description happens to contain the word
+         "parent". Override with title_rescue_keywords -- if the title
+         ALSO matches a rescue word (your kid's name, your kid's grade,
+         your kid's class year), the event is rescued from exclusion and
+         continues through normal rules.
+      4. Match in include_keywords (full text) -> include.
+      5. Match in exclude_keywords (full text) -> exclude.
+      6. Match in feed_excludes[feed_name] (full text) -> exclude.
+      7. Fall back to feed_defaults[feed_name], default 'exclude'.
     """
     text = get_searchable_text(event)
+    summary = normalize(str(event.get("SUMMARY", "")))
 
     if matches_any(text, cfg.get("always_exclude_keywords", [])):
         return False, "matched always-exclude keyword"
 
     if feed_name in cfg.get("always_include_feeds", []):
         return True, "always-include feed"
+
+    if matches_any(summary, cfg.get("title_excludes", [])):
+        if not matches_any(summary, cfg.get("title_rescue_keywords", [])):
+            return False, "title-excluded grade (no rescue match)"
 
     if matches_any(text, cfg.get("include_keywords", [])):
         return True, "matched include keyword"
