@@ -1,0 +1,129 @@
+# Filter rules for the family calendar.
+# Edit this file to tune what gets included/excluded.
+# After saving, the workflow re-runs and your subscribed calendar updates within
+# a few hours (Google Calendar's polling interval -- not under our control).
+
+output_name: "Nueva Family Filtered"
+output_filename: "family.ics"
+output_dir: "output"
+timezone: "America/Los_Angeles"
+
+# Source feeds. URLs come from GitHub Secrets, not from this file,
+# so this repo can be public without exposing your private feed URLs.
+feeds:
+  - name: whole_school
+    url_env: FEED_WHOLE_SCHOOL
+  - name: middle_school
+    url_env: FEED_MIDDLE_SCHOOL
+  - name: upper_school
+    url_env: FEED_UPPER_SCHOOL
+  - name: maia_games
+    url_env: FEED_MAIA_GAMES
+  - name: zander_games
+    url_env: FEED_ZANDER_GAMES
+
+# Feeds listed here are passed through with NO filtering.
+# Use this for feeds that are already kid-specific.
+always_include_feeds:
+  - maia_games
+  - zander_games
+
+# What happens to an event when no include/exclude keyword matches:
+#   include = pull it in (good for the broad whole-school feed)
+#   exclude = leave it out (good for grade-level feeds where you only
+#             want events explicitly matching your kids' grades)
+feed_defaults:
+  whole_school: include
+  middle_school: exclude
+  upper_school: exclude
+
+# If an event's title/description/location/categories contain ANY of these
+# words, it gets INCLUDED. Include beats exclude -- so a "5th & 6th Grade
+# Mixer" stays in because "5th grade" matches.
+include_keywords:
+  # Kid names
+  - "maia"
+  - "zander"
+
+  # Maia: 5th grade (Middle School at Nueva)
+  - "5th grade"
+  - "grade 5"
+  - "5th-grade"
+  - "g5"
+  - "5th"     # catches things like "5th & 6th Grade Mixer"; word-bounded
+              # match. Could in theory false-trigger on event titles
+              # containing "May 5th" etc, but most school feeds put dates
+              # in DTSTART, not the title. If you see a false positive,
+              # add the offending title to `always_exclude_keywords` below.
+
+  # Zander: 11th grade (Upper School at Nueva)
+  - "11th grade"
+  - "grade 11"
+  - "11th-grade"
+  - "g11"
+  - "11th"    # catches things like "11th & 12th Grade Banquet"
+  - "junior"
+  - "juniors"
+
+  # Things that apply to the whole family / all parents
+  - "parent"
+  - "parents"
+  - "family"
+  - "all-school"
+  - "all school"
+  - "community"
+  - "holiday"
+  - "no school"
+  - "school closed"
+  - "early dismissal"
+  - "conferences"
+  - "back to school"
+  - "open house"
+
+# If an event matches ANY of these AND nothing in include_keywords, it gets EXCLUDED.
+# Mostly used here to filter out other-grade noise.
+exclude_keywords:
+  # Lower School (K-4) -- not Margarita's kids
+  - "kindergarten"
+  - "1st grade"
+  - "grade 1"
+  - "2nd grade"
+  - "grade 2"
+  - "3rd grade"
+  - "grade 3"
+  - "4th grade"
+  - "grade 4"
+
+  # Middle School: 6th, 7th, 8th (Maia is 5th)
+  - "6th grade"
+  - "grade 6"
+  - "7th grade"
+  - "grade 7"
+  - "8th grade"
+  - "grade 8"
+
+  # Upper School: 9th, 10th, 12th (Zander is 11th)
+  - "9th grade"
+  - "grade 9"
+  - "freshman"
+  - "freshmen"
+  - "10th grade"
+  - "grade 10"
+  - "sophomore"
+  - "sophomores"
+  - "12th grade"
+  - "grade 12"
+  - "senior"
+  - "seniors"
+
+# HIGHEST-priority excludes. If you find that a broad include keyword
+# (like "5th" or "11th") is wrongly pulling in events whose titles you
+# don't want -- e.g., a concert titled "Spring Show: May 11th" --
+# add a distinctive phrase from that title here. These ALWAYS win.
+always_exclude_keywords: []
+
+# Optional per-feed extra exclusions. Empty by default. Example:
+#   feed_excludes:
+#     whole_school:
+#       - "alumni reunion"
+feed_excludes: {}
