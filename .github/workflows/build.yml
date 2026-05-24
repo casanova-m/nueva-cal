@@ -1,5 +1,8 @@
 name: Build family calendar
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   schedule:
     # Every 2 hours, 15 min past the hour (avoids the on-the-hour rush
