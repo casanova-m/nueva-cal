@@ -40,4 +40,5 @@ def normalize(text: str) -> str:
 
 
 def stringify_datetime(value) -> str:
-    """Stable s
+    """Stable key for cross-feed dedup. Same SUMMARY + DTSTART => same event,
+    regardless of which feed it came from or what UID it happens to have."""
