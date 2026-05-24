@@ -1,19 +1,28 @@
 # Filter rules for the family calendar.
-# Edit this file to tune what gets included/excluded.
-# After saving (committing) on GitHub, the workflow re-runs automatically and
-# the preview page updates within ~2 minutes. Google Calendar then picks up
-# the changes within a few hours (Google's polling interval, not ours).
+# After committing any change here, the workflow re-runs automatically.
+# The preview page updates within ~2 minutes; Google Calendar within a few hours.
 #
-# Grades:
-#   Maia   = 11th grade (Upper School), Class of 2027
-#   Zander = 5th grade  (Middle School), Class of 2033
+# GRADE RULES ARE AUTOMATIC. Just keep the graduation years below correct.
+# The script calculates each kid's current grade from their graduation year
+# and the date of each event -- no annual edits required.
 
 output_name: "Nueva Family Filtered"
 output_filename: "family.ics"
 output_dir: "output"
 timezone: "America/Los_Angeles"
 
-# Source feeds. URLs come from GitHub Secrets, not from this file.
+# ---------------------------------------------------------------------------
+# STUDENTS
+# The only thing you ever need to update. Graduation years drive all
+# grade-based filtering automatically.
+# ---------------------------------------------------------------------------
+students:
+  - name: maia
+    graduation_year: 2027   # Currently 11th grade, becoming 12th in Aug 2026
+  - name: zander
+    graduation_year: 2033   # Currently 5th grade, becoming 6th in Aug 2026
+
+# Source feeds. URLs live in GitHub Secrets, not here.
 feeds:
   - name: whole_school
     url_env: FEED_WHOLE_SCHOOL
@@ -30,44 +39,23 @@ always_include_feeds:
   - maia_games
   - zander_games
 
-# Default behavior when no other rule matches.
 feed_defaults:
   whole_school: include
   middle_school: exclude
   upper_school: exclude
 
 # ---------------------------------------------------------------------------
-# TITLE-ONLY EXCLUDES
-# These match only the event TITLE (not description). They beat
-# include_keywords -- so an event titled "8th Grade Trip" stays out even
-# if its description mentions "parent" or "family".
-#
-# Rescue: if the title ALSO matches anything in title_rescue_keywords,
-# the exclude is skipped -- so "5th & 6th Grade Mixer" still includes
-# (because "5th" rescues it).
+# STATIC TITLE EXCLUDES
+# Grade 5-12 exclusions are handled automatically by the script.
+# This list only needs below-grade-5 levels and wrong class years.
 # ---------------------------------------------------------------------------
 title_excludes:
-  # Grades other than Maia's (11th) and Zander's (5th)
   - "kindergarten"
   - "1st grade"
   - "2nd grade"
   - "3rd grade"
   - "4th grade"
-  - "6th grade"     # substring also catches "6th graders", "6th Grade Trip"
-  - "7th grade"
-  - "8th grade"
-  - "9th grade"
-  - "10th grade"
-  - "12th grade"
-  - "gr. 4"
-  - "gr. 6"
-  - "gr. 7"
-  - "gr. 8"
-  - "gr. 9"
-  - "gr. 10"
-  - "gr. 12"
-
-  # Other graduating classes (Maia = 2027, Zander = 2033)
+  - "lower school"
   - "class of 2024"
   - "class of 2025"
   - "class of 2026"
@@ -80,26 +68,11 @@ title_excludes:
   - "class of 2035"
   - "class of 2036"
 
-  # Senior-specific (12th-grade) events
-  - "senior dinner"
-  - "senior portraits"
-  - "senior sunrise"
-  - "senior retreat"
-  - "senior spring retreat"
-  - "senior send-off"
-  - "senior banquet"
-
-# Rescue keywords. If a title matches title_excludes AND any of these,
-# the exclude is overruled.
+# Rescue keywords: a title-excluded event that also matches any of these
+# is rescued back into normal processing.
 title_rescue_keywords:
-  - "5th"
-  - "11th"
   - "maia"
   - "zander"
-  - "junior"          # 11th = Maia
-  - "juniors"
-  - "class of 2027"   # Maia
-  - "class of 2033"   # Zander
   - "all-school"
   - "all school"
   - "lower & middle"
@@ -107,35 +80,20 @@ title_rescue_keywords:
   - "ls/ms"
   - "no school"
   - "no classes"
-
-# ---------------------------------------------------------------------------
-# INCLUDE KEYWORDS (full-text: title, description, location, categories)
-# An event matching ANY of these gets included unless overridden above.
-# ---------------------------------------------------------------------------
-include_keywords:
-  # Kid names
-  - "maia"
-  - "zander"
-
-  # Maia: 11th grade (Upper School), Class of 2027
-  - "11th grade"
-  - "grade 11"
-  - "11th-grade"
-  - "g11"
-  - "11th"
-  - "junior"
-  - "juniors"
   - "class of 2027"
-
-  # Zander: 5th grade (Middle School), Class of 2033
-  - "5th grade"
-  - "grade 5"
-  - "5th-grade"
-  - "g5"
-  - "5th"
   - "class of 2033"
 
-  # Whole-family / all-parents
+# ---------------------------------------------------------------------------
+# INCLUDE KEYWORDS (full text: title + description + location + categories)
+# Grade keywords are NOT needed here -- handled dynamically.
+# ---------------------------------------------------------------------------
+include_keywords:
+  - "maia"
+  - "zander"
+  - "class of 2027"
+  - "class of 2033"
+  - "steel drum"
+  - "steel drums"
   - "parent"
   - "parents"
   - "family"
@@ -144,59 +102,69 @@ include_keywords:
   - "community"
   - "holiday"
   - "no school"
-  - "no classes"           # catches "No Classes: US Recovery Day"
+  - "no classes"
   - "school closed"
   - "early dismissal"
   - "conferences"
   - "back to school"
-  - "back-to-school"       # hyphenated, used in actual school comms
+  - "back-to-school"
   - "open house"
-
-  # Nueva Parents Association
   - "npa"
 
-  # Community traditions
-  - "lifers dinner"
-
 # ---------------------------------------------------------------------------
-# EXCLUDE KEYWORDS (full-text)
+# EXCLUDE KEYWORDS (full text)
 # ---------------------------------------------------------------------------
 exclude_keywords:
-  # Graduations -- only Maia's (2027) and Zander's (2033) are yours.
-  # "graduation" alone catches everything; the class-year include_keywords
-  # rescue Maia's and Zander's graduations when they appear.
   - "graduation"
 
-  # Generic other-grade markers in descriptions
-  - "freshman"
-  - "freshmen"
-  - "sophomore"
-  - "sophomores"
-
-# Highest-priority excludes. ALWAYS win, no rescue.
-# Used here so "rising 5th" beats the "5th" rescue, and "NPA Retreat"
-# beats the broad "npa" include.
+# ---------------------------------------------------------------------------
+# ALWAYS EXCLUDE -- highest priority, no rescue possible.
+# ---------------------------------------------------------------------------
 always_exclude_keywords:
-  # "Rising X" events are for parents of kids CURRENTLY in (X-1).
-  # Keep "rising 6th" (Zander) and "rising 12th" (Maia).
-  - "rising 1st"
-  - "rising 2nd"
-  - "rising 3rd"
-  - "rising 4th"
-  - "rising 5th"
-  - "rising 7th"
-  - "rising 8th"
-  - "rising 9th"
-  - "rising 10th"
-  - "rising 11th"
-
-  # NPA exceptions -- "npa" is broadly included, but these stay out.
   - "npa retreat"
   - "npa half day retreat"
   - "npa board"
   - "npa board meeting"
+  - "athletics commitment ceremony"
+  - "family garden workday"
+  - "sustaining joy and wellness in the black"
+  - "financial assistance"
+  - "admissions financial"
+  - "re-enrollment agreement"
+  - "nueva summer"
+  - "summer institute"
+  - "all faculty/staff work week"
+  - "ifsel"
+  - "creating institutional belonging"
+  - "design thinking institute"
+  - "structured word inquiry"
 
-# Optional per-feed extra exclusions. Example:
+# ---------------------------------------------------------------------------
+# DATE-BASED TRANSITION (senior milestone events)
+# Events matching transition_keywords are:
+#   BEFORE transition_date -> excluded (applies to another graduating class)
+#   ON/AFTER transition_date -> included (applies to YOUR kid)
+#
+# June 15 is safely after current seniors' graduation (June 7) and last
+# day of school (June 5). Works automatically for both Maia (2027) and
+# Zander (2033) -- no changes needed when Zander becomes a senior.
+# ---------------------------------------------------------------------------
+transition_date: "2026-06-15"
+
+transition_keywords:
+  - "senior portraits"
+  - "senior sunrise"
+  - "senior retreat"
+  - "senior spring retreat"
+  - "senior send-off"
+  - "senior parent send-off"
+  - "senior banquet"
+  - "senior dinner"
+  - "12th grade graduation"
+  - "lifers dinner"
+
+# Optional per-feed extra exclusions.
+# Example:
 #   feed_excludes:
 #     whole_school:
 #       - "alumni reunion"
